@@ -20,6 +20,11 @@ RUN go build -o node-metrics ./cmd/node-metrics.go
 FROM alpine:latest
 
 WORKDIR /
+
+COPY hack/build/crictl /usr/local/bin/
+
+RUN echo "runtime-endpoint: unix:///run/containerd/containerd.sock" > /etc/crictl.yaml && chmod 755 /usr/local/bin/crictl
+
 COPY --from=builder /workspace/node-metrics .
 
 ENTRYPOINT ["/node-metrics"]

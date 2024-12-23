@@ -15,10 +15,13 @@ spec:
         app: node-metrics
     spec:
       containers:
-      - image: dongjiang1989/node-metrics:latest
+      - image: registry.cn-hangzhou.aliyuncs.com/hexiaoshi/node-metrics:0.0.1
         name: node-metrics
         args:
         - --web.listen-address=0.0.0.0:19101
+        volumeMounts:
+          - mountPath: /run/containerd/containerd.sock
+            name: containerd
         resources:
           limits:
             cpu: 102m
@@ -28,6 +31,8 @@ spec:
             memory: 180Mi
       hostNetwork: true
       hostPID: true
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
+      volumes:
+        - hostPath:
+            path: /run/containerd/containerd.sock
+            type: 'Socket'
+          name: containerd          

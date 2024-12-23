@@ -23,9 +23,11 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/exec"
 	"os/user"
 	"runtime"
 	"sort"
+	"time"
 
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
@@ -248,6 +250,20 @@ func main() {
 		}
 		http.Handle("/", landingPage)
 	}
+
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+	go func() {
+		for range ticker.C {
+			cmd := exec.Command("sh", "-c", "/usr/local/bin/crictl rmi --prune")
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				level.Error(logger).Log("msg", "Error running periodic task", "err", err, "output", string(output))
+			} else {
+				level.Info(logger).Log("msg", "Periodic task output", "output", string(output))
+			}
+		}
+	}()
 
 	server := &http.Server{}
 	if err := web.ListenAndServe(server, toolkitFlags, logger); err != nil {
